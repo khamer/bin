@@ -1,0 +1,66 @@
+#!/bin/bash
+
+eval $(xdotool getactivewindow getwindowgeometry --shell)
+CURRENTPOS="$X-$Y-$WIDTH-$HEIGHT"
+
+LEFTEDGE=12
+
+TOPEDGE=48
+
+main() {
+	eval $(xdotool getactivewindow getwindowgeometry --shell)
+	HASH="$X-$Y-$WIDTH-$HEIGHT"
+
+	XCENTER=$(($X+$WIDTH/2))
+
+	case "$1" in
+		show)
+			;;
+		maximize)
+			if [ $(xprop -id $(xdotool getactivewindow) | grep -c _NET_WM_STATE_MAXIMIZED_VERT) -gt 0 ]; then
+				wmctrl -r ":ACTIVE:" -b remove,maximized_vert
+			fi
+			wmctrl -r ":ACTIVE:" -b toggle,maximized_horz,maximized_vert
+			;;
+		left)
+			wmctrl -r ":ACTIVE:" -b remove,maximized_horz
+			if [ $XCENTER -ge 1920 ]; then
+				xdotool getactivewindow windowmove 1920 0
+			else
+				xdotool getactivewindow windowmove 0 0
+			fi
+			xdotool getactivewindow windowsize $((960-$LEFTEDGE)) y
+			wmctrl -r ":ACTIVE:" -b add,maximized_vert
+
+			eval $(xdotool getactivewindow getwindowgeometry --shell)
+			NEWHASH="$X-$Y-$WIDTH-$HEIGHT"
+			if [ $XCENTER -ge 1920 ] && [[ $HASH == $NEWHASH ]]; then
+				xdotool getactivewindow windowmove 960 0
+				xdotool getactivewindow windowsize $((960-$LEFTEDGE)) y
+				wmctrl -r ":ACTIVE:" -b add,maximized_vert
+			fi
+			;;
+		right)
+			wmctrl -r ":ACTIVE:" -b remove,maximized_horz
+			if [ $XCENTER -ge 1920 ]; then
+				xdotool getactivewindow windowmove 2880 0
+			else
+				xdotool getactivewindow windowmove 960 0
+			fi
+			xdotool getactivewindow windowsize $((960-$LEFTEDGE)) y
+			wmctrl -r ":ACTIVE:" -b add,maximized_vert
+
+			eval $(xdotool getactivewindow getwindowgeometry --shell)
+			NEWHASH="$X-$Y-$WIDTH-$HEIGHT"
+			if [ $XCENTER -lt 1920 ] && [[ $HASH == $NEWHASH ]]; then
+				xdotool getactivewindow windowmove 1920 0
+				xdotool getactivewindow windowsize $((960-$LEFTEDGE)) y
+				wmctrl -r ":ACTIVE:" -b add,maximized_vert
+			fi
+			;;
+		*)
+			;;
+	esac
+}
+
+main "$@"
