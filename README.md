@@ -1,22 +1,29 @@
-~khamer/bin
-===========
-
+# ~khamer/bin #
 These are various scripts and such I've written and use on a daily basis.
 
-wmsnap
-------
+## overload ##
+overload effectively allows bash functions to have names that contain spaces as
+long as they start with well known words by translating them into underscores
+and checking for the existence of such a function. I use this primarily to
+improve svn's command line interface to have additional functionality or
+memorable shortcuts that don't cloud up the ENVironment.
 
+## wmsnap ##
 wmsnap is a simple window management and positioning script that I use with to
 emulate the behavior in Windows Vista/7 for two, side-by-side, 1920x1080
 monitors. I've tried making the script more extensible and configurable in the
 past, but at present, its quite hardcoded. On the plus, side, its currently
 works the best it ever has. It depends only on wmctrl, xdotool, and xprop.
 
-overload
---------
+## upload ##
+This is the script I use with vim to upload files to our development
+environments. It uses `rsync` by default, but it can be configured to use
+`lftp` for environments that only support sftp.
 
-overload effectively allows bash functions to have names that contain spaces as
-long as they start with well known words by translating them into underscores
-and checking for the existence of such a function. I use this primarily to
-improve svn's command line interface to have additional functionality or
-memorable shortcuts that don't cloud up the ENVironment.
+This is how I call the upload script from vim:
+```vim
+nnoremap <Leader>r :execute '!upload %'<CR><CR>
+nnoremap <Leader>W :w<CR>:execute '!upload %'<CR><CR>
+nnoremap <Leader>R :execute '!upload %:h'<CR><CR>
+nnoremap <Leader>T :execute '!upload .'<CR><CR>
+```
