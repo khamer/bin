@@ -1,0 +1,91 @@
+#!/bin/bash
+main() {
+	MODE="RSYNC"
+	PAUSE=0
+	while getopts ":srp" OPT; do
+		case $OPT in
+			s)
+				#echo "Forced SFTP mode.";
+				MODE="SFTP"
+				;;
+			r)
+				#echo "Forced RSYNC mode.";
+				MODE="RSYNC"
+				;;
+			p)
+				PAUSE=.5
+				;;
+		esac
+	done
+
+	ARGS_START=0
+	for ARG in "$@"; do
+		if [ $ARGS_START == 0 ] && [[ ${ARG:0:1} == "-" ]]; then
+			shift
+		else
+			ARGS_START=1
+		fi
+	done
+
+	if [ -z "$1" ]; then
+		ACTIVE="."
+	else
+		ACTIVE="$1"
+	fi
+	ACTIVE=$(readlink -f $ACTIVE)
+
+	ROOTDIR="$ACTIVE"
+
+## find SERVERINFO
+	while ! [ -e "$ROOTDIR/SERVERINFO.txt" ] && [ $ROOTDIR != '/' ]; do
+		ROOTDIR=$(dirname $ROOTDIR)
+	done
+
+	if ! [ -e "$ROOTDIR/SERVERINFO.txt" ]; then
+		echo "Failed to find a SERVERINFO.txt.";
+		exit 1
+	fi
+
+	REL=${ACTIVE##$ROOTDIR}
+	#echo ROOTDIR=$ROOTDIR
+	#echo ACTIVE=$ACTIVE
+	#echo REL=$REL
+
+	WEB_USER="web"
+	WEB_SERVER="${ROOTDIR##*/}"
+	WEB_PATH="www/${ROOTDIR##*/}/dev"
+
+	source $ROOTDIR/SERVERINFO.txt
+
+	if [ -d $ACTIVE ]; then
+		echo Syncing directory $ACTIVE...
+		case $MODE in
+			SFTP)
+				echo lftp -e "cd $WEB_PATH/$REL; mirror -x '\.svn.*' -cpR $ACTIVE .; quit" -u "$WEB_USER" sftp://$WEB_SERVER:
+				lftp -e "cd $WEB_PATH/$REL; mirror -x '\.svn.*' -cpR $ACTIVE .; quit" -u "$WEB_USER" sftp://$WEB_SERVER:
+				;;
+			*)
+				#echo rsync -rltDvz --delete --exclude=writable --exclude=session --exclude=TAGS --exclude=.svn --exclude=.hg --exclude="*.swp" $ACTIVE/ $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				rsync -parltDvz --chmod="u=rwx,g=rwx,o=rx" --delete --exclude=writable --exclude=session --exclude=TAGS --exclude=.svn --exclude=.hg --exclude="*.swp" $ACTIVE/ $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				;;
+		esac
+	else
+		echo Uploading file $ACTIVE...
+		case $MODE in
+			SFTP)
+				REL=$(dirname $REL)
+				echo lftp -e "cd $WEB_PATH/$REL; put $ACTIVE; quit" -u "$WEB_USER" sftp://$WEB_SERVER:
+				lftp -e "cd $WEB_PATH/$REL; put $ACTIVE; quit" -u "$WEB_USER" sftp://$WEB_SERVER:
+				;;
+			*)
+				#echo rsync -rltDvz --delete --exclude=.svn --exclude="*.swp" --exclude=.hg $ACTIVE $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				rsync -parltDvz --chmod="u=rwx,g=rwx,o=rx" --delete --exclude=.svn --exclude="*.swp" --exclude=.hg $ACTIVE $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				;;
+		esac
+	fi
+}
+
+main "$@"
+
+sleep $PAUSE
+exit 0
