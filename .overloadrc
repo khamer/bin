@@ -64,6 +64,13 @@ svn_commit() {
 	$original_command ci "$@"
 }
 
+svn_sl() {
+	svn_shortlog "$@"
+}
+svn_shortlog() {
+	$original_command log "$@" | grep [^-] | sed -e 'N;s/\n/ /'
+}
+
 svn_ct() {
 	svn_commit-ticket "$@"
 }
