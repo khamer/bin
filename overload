@@ -5,7 +5,7 @@
 ## @Author Kevin Hamer <khamer@becauserobots.com>
 ##
 ## 
-OVERLOAD_VERSION="1.2"
+OVERLOAD_VERSION="1.1"
 
 if [[ ${0##*/} == 'bash' ]]; then
 	if (( $# > 0 )); then
@@ -67,22 +67,32 @@ To see what commands have been overloaded,
 		old_function_name=""
 		found=0
 		num_args=0
-		while [[ "$function_name" != "$old_function_name" ]]; do
-			old_function_name="$function_name"
 
+		while [[ "$function_name" != "$old_function_name" ]]; do
 			if [[ "$(type -t $function_name)" == "function" ]]; then
 				found=1
 				break
 			fi
 
 			num_args=$(($num_args+1))
+			old_function_name="$function_name"
 			function_name="${function_name%_*}"
+
+			echo "$function_name $num_args";
 		done
 
+		num_args=$(($num_args-1));
+		echo count = $# and num_args = $num_args
 		start_offset=$(($#-$num_args+1))
+		echo start_offset = $start_offset
+		echo using ${@:$start_offset:$num_args}
 
 		if (( $found > 0 )); then
 			## Call function with remaining arguments.
+			echo "DEBUG: function_name $function_name" >&2
+			echo "DEBUG: using $num_args args starting with $start_offset" >&2
+			echo "DEBUG: arguments:   " ${@:$start_offset:$num_args} >&2
+
 			$function_name "${@:$start_offset:$num_args}"
 		else
 			## Call first 'non-overload' version of $command.
