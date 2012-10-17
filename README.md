@@ -8,6 +8,10 @@ and checking for the existence of such a function. I use this primarily to
 improve svn's command line interface to have additional functionality or
 memorable shortcuts that don't cloud up the ENVironment.
 
+I reworked this script fairly heavily recently after solving some critical
+issues that the previous version had. I believe this verison is significantly
+improved over overload 1.x, so I'd recommend the upgrade.
+
 ## wmsnap ##
 wmsnap is a simple window management and positioning script that I use with to
 emulate the behavior in Windows Vista/7 for two, side-by-side, 1920x1080
@@ -27,3 +31,12 @@ nnoremap <Leader>W :w<CR>:execute '!upload %'<CR><CR>
 nnoremap <Leader>R :execute '!upload %:h'<CR><CR>
 nnoremap <Leader>T :execute '!upload .'<CR><CR>
 ```
+## colortest ##
+Just displays all the available colors in a terminal for testing terminal color
+schemes.
+
+## go ##
+go just automates some of the repetition of connection to remote hosts.
+
+## v ##
+just a launcher script for gvim that handles multiple file arguments at once.

@@ -1,15 +1,14 @@
 #!/bin/bash
-## Overload allows you to define alternate behavior for commands based upon their parameters.
-## Configuration is done by defining functions in $HOME/.overloadrc or even just in your bashrc.
-##
-## @Author Kevin Hamer <khamer@becauserobots.com>
-##
-## 
-OVERLOAD_VERSION="1.1"
 
+OVERLOAD_VERSION="2.0"
+
+
+pass_through="$@"
+
+## Trickery for determining whether this is being sourced.
 if [[ ${0##*/} == 'bash' ]]; then
-	if (( $# > 0 )); then
-		while (( $# > 0 )); do
+	if [ $# -gt 0 ]; then
+		while [ $# -gt 0 ]; do
 			eval "$1() { overload $1 \"\$@\"; }"
 			shift
 		done
@@ -18,88 +17,63 @@ if [[ ${0##*/} == 'bash' ]]; then
 	fi
 else
 
-	function help() {
-		echo "usage: overload COMMAND [ARGS]
-Overload written by Kevin Hamer, verson $OVERLOAD_VERSION.
-
-Overload allows you to define different behaviors for commands through bash
-functions. To enable overload for a command,
-
-    source overload COMMAND [ COMMAND [ ... ] ]
-
-To see what commands have been overloaded,
-    source overload
-"
-	}
+	## Normal execution
 
 	function version() {
-		echo "Overload: v$OVERLOAD_VERSION"
+		echo "Current version: $OVERLOAD_VERSION";
+	}
+
+	function help() {
+		echo "Usage: overload COMMAND [ARGS]"
+		version
 	}
 
 	function underscorize() {
 		underscorize="$*"
 		echo "${underscorize// /_}"
 	}
+	
+	function findBinary() {
+		find_binary="$(which -a $1 | grep -v "$0" | head -n 1)"
+		echo $find_binary
+	}
 
 	function main() {
-		script="$0"
-		command="${script##*/}"
+		executed="$0"
+		command="${executed##*/}"
 
-		## If calling overload directly, make sure to not use the name of the script.
+		## If calling overload directly, use the first arg as the command.
 		if [[ $command == 'overload' ]]; then
 			command="${1##*/}"
-			original_command="$command"
-			function_name="$(underscorize "$@")"
-		else
-			## This command finds the first 'non-overload' version of $command on
-			## the path.
-			original_command="$(which -a $command | grep -v "$script" | head -n 1)"
-			function_name="$(underscorize $command "$@")"
+			shift
 		fi
 
-		## You can also put functions in your .bashrc or anywhere else that would
-		## ensure that they are defined for this script's environment.
+		original_command="$(findBinary $command)"
+
 		if [[ -e $HOME/.overloadrc ]]; then
 			source $HOME/.overloadrc
 		fi
 
-		## Tries to find matching functions, starting with the longest name first.
-		old_function_name=""
 		found=0
-		num_args=0
+		N=$#
+		while [ $N -ge 0 ]; do
+			func=$(underscorize $command "${@:1:$N}")
+			params=${@:$N+1}
 
-		while [[ "$function_name" != "$old_function_name" ]]; do
-			if [[ "$(type -t $function_name)" == "function" ]]; then
+			if [[ "$(type -t $func)" == "function" ]]; then
 				found=1
 				break
 			fi
 
-			num_args=$(($num_args+1))
-			old_function_name="$function_name"
-			function_name="${function_name%_*}"
-
-			echo "$function_name $num_args";
+			N=$(($N-1))
 		done
 
-		num_args=$(($num_args-1));
-		echo count = $# and num_args = $num_args
-		start_offset=$(($#-$num_args+1))
-		echo start_offset = $start_offset
-		echo using ${@:$start_offset:$num_args}
-
-		if (( $found > 0 )); then
-			## Call function with remaining arguments.
-			echo "DEBUG: function_name $function_name" >&2
-			echo "DEBUG: using $num_args args starting with $start_offset" >&2
-			echo "DEBUG: arguments:   " ${@:$start_offset:$num_args} >&2
-
-			$function_name "${@:$start_offset:$num_args}"
+		if [ $found -gt 0 ]; then
+			$func "${@:$N+1}"
 		else
-			## Call first 'non-overload' version of $command.
-			"$@"
+			$pass_through
 		fi
 	}
 
 	main "$@"
-
 fi
