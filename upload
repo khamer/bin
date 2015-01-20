@@ -27,6 +27,13 @@ main() {
 		fi
 	done
 
+	if [ $# -gt 1 ]; then
+		for file in "$@"; do
+			$0 $file
+		done
+		exit 0
+	fi
+
 	if [ -z "$1" ]; then
 		ACTIVE="."
 	else
@@ -54,6 +61,7 @@ main() {
 	WEB_USER="web"
 	WEB_SERVER="${ROOTDIR##*/}"
 	WEB_PATH="www/${ROOTDIR##*/}/dev"
+	RSYNC_ARGS=""
 
 	source $ROOTDIR/SERVERINFO.txt
 
@@ -65,8 +73,8 @@ main() {
 				lftp -e "cd $WEB_PATH/$REL; mirror -x '\.svn.*' -cpR $ACTIVE .; quit" -u "$WEB_USER" sftp://$WEB_SERVER:
 				;;
 			*)
-				#echo rsync -rltDvz --delete --exclude=writable --exclude=session --exclude=TAGS --exclude=.svn --exclude=.hg --exclude="*.swp" $ACTIVE/ $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
-				rsync -parltDvz --chmod="u=rwx,g=rwx,o=rx" --delete --exclude=writable --exclude=session --exclude=TAGS --exclude=.svn --exclude=.hg --exclude="*.swp" $ACTIVE/ $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				echo rsync -Clrtz $RSYNC_ARGS --chmod=D2775,F664 --delete --exclude=SERVERINFO.txt --exclude=writable --exclude=session $ACTIVE/ $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				rsync -Clrtz $RSYNC_ARGS --chmod=D2775,F664 --delete --exclude=SERVERINFO.txt --exclude=writable --exclude=session $ACTIVE/ $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
 				;;
 		esac
 	else
@@ -78,8 +86,8 @@ main() {
 				lftp -e "cd $WEB_PATH/$REL; put $ACTIVE; quit" -u "$WEB_USER" sftp://$WEB_SERVER:
 				;;
 			*)
-				#echo rsync -rltDvz --delete --exclude=.svn --exclude="*.swp" --exclude=.hg $ACTIVE $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
-				rsync -parltDvz --chmod="u=rwx,g=rwx,o=rx" --delete --exclude=.svn --exclude="*.swp" --exclude=.hg $ACTIVE $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				echo rsync -Clrtz $RSYNC_ARGS --chmod=D2775,F664 --delete $ACTIVE $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
+				rsync -Clrtz $RSYNC_ARGS --chmod=D2775,F664 --delete $ACTIVE $WEB_USER@$WEB_SERVER:$WEB_PATH/$REL
 				;;
 		esac
 	fi
