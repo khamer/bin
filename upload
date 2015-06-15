@@ -27,6 +27,13 @@ main() {
 		fi
 	done
 
+	if [ $# -eq 0 ]; then
+		while read file; do
+			$0 $file
+		done
+		exit 0
+	fi
+
 	if [ $# -gt 1 ]; then
 		for file in "$@"; do
 			$0 $file
@@ -34,12 +41,7 @@ main() {
 		exit 0
 	fi
 
-	if [ -z "$1" ]; then
-		ACTIVE="."
-	else
-		ACTIVE="$1"
-	fi
-	ACTIVE=$(readlink -f $ACTIVE)
+	ACTIVE=$(readlink -f $1)
 
 	ROOTDIR="$ACTIVE"
 
