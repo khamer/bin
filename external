@@ -1,9 +1,26 @@
 #!/bin/bash
 
+EXTERNAL=$(xrandr -q | mawk '$2 == "connected" && $1 != "LVDS1" {print $1}')
+
+if [ -z "$EXTERNAL" ]; then
+	echo "Nothing connected, falling back to DP1"
+    EXTERNAL="DP1"
+fi
+
 if [ $1 == 'none' ]; then
-xrandr --output HDMI1 --off
+	xrandr --output $EXTERNAL --off
+elif [ $1 == 'auto' ]; then
+	if xrandr -q | grep -cq $EXTERNAL; then
+		xrandr --output LVDS1 --pos 2560x540 --output $EXTERNAL --auto --left-of LVDS1
+		/home/kevin/bin/wmsnap detect
+	else
+		xrandr --output $EXTERNAL --off
+		/home/kevin/bin/wmsnap detect
+	fi
 elif [ $1 == 'right' ]; then
-xrandr --output HDMI1 --auto --right-of LVDS1
+	xrandr --output $EXTERNAL --auto --right-of LVDS1
 elif [ $1 == 'left' ]; then
-xrandr --output HDMI1 --auto --left-of LVDS1
+	xrandr --output $EXTERNAL --auto --left-of LVDS1
+elif [ $1 == 'downleft' ]; then
+	xrandr --output LVDS1 --pos 2560x540 --output $EXTERNAL --auto --left-of LVDS1
 fi

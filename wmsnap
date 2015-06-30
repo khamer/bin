@@ -2,7 +2,8 @@
 ##
 # Written by Kevin Hamer, mostly for his own use.
 
-EDGEWIDTH=6
+##EDGEWIDTH=6
+EDGEWIDTH=0
 
 getGeometry() {
 	## Read in info about the active window
@@ -20,6 +21,8 @@ getGeometry() {
 	## HASH is used to tell whether the window has actually moved or not.
 	HASH="$X-$Y-$WIDTH-$HEIGHT"
 	echo "HASH = $HASH"
+
+	xdotool getactivewindow getwindowgeometry --shell
 }
 
 getGeometry
@@ -49,6 +52,7 @@ init() {
 	source ~/.wmsnaprc
 	## Find current monitor
 	for MONITOR in $MONITORS; do
+		echo "MONITOR = $MONITOR ..."
 		loadMonitor
 		if [ $XCENTER -ge $MINX ] && [ $XCENTER -le $MAXX ]; then
 			break
@@ -64,9 +68,10 @@ main() {
 			;;
 		left)
 			init
-			wmctrl -r ":ACTIVE:" -b remove,maximized_horz
+			wmctrl -r ":ACTIVE:" -b remove,maximized_horz,maximized_vert
 			xdotool getactivewindow windowmove $(($MINX)), 0
 			xdotool getactivewindow windowsize $(($HALFX-$EDGEWIDTH)) y
+			sleep .05s
 			wmctrl -r ":ACTIVE:" -b add,maximized_vert
 
 			OLDHASH="$HASH"
@@ -78,7 +83,7 @@ main() {
 					echo "move to left monitor"
 					MONITOR=$LEFTMONITOR
 					loadMonitor
-					wmctrl -r ":ACTIVE:" -b remove,maximized_horz
+					wmctrl -r ":ACTIVE:" -b remove,maximized_horz,maximized_vert
 					xdotool getactivewindow windowmove $(($MINX+$HALFX)) 0
 					xdotool getactivewindow windowsize $(($HALFX-$EDGEWIDTH)) y
 					wmctrl -r ":ACTIVE:" -b add,maximized_vert
@@ -87,9 +92,10 @@ main() {
 			;;
 		right)
 			init
-			wmctrl -r ":ACTIVE:" -b remove,maximized_horz
+			wmctrl -r ":ACTIVE:" -b remove,maximized_horz,maximized_vert
 			xdotool getactivewindow windowmove $(($MINX+$HALFX)) 0
 			xdotool getactivewindow windowsize $(($HALFX-$EDGEWIDTH)) y
+			sleep .05s
 			wmctrl -r ":ACTIVE:" -b add,maximized_vert
 
 			OLDHASH="$HASH"
@@ -101,7 +107,7 @@ main() {
 					echo "move to right monitor, $RIGHTMONITOR"
 					MONITOR=$RIGHTMONITOR
 					loadMonitor
-					wmctrl -r ":ACTIVE:" -b remove,maximized_horz
+					wmctrl -r ":ACTIVE:" -b remove,maximized_horz,maximized_vert
 					xdotool getactivewindow windowmove $(($MINX)), 0
 					xdotool getactivewindow windowsize $(($HALFX-$EDGEWIDTH)) y
 					wmctrl -r ":ACTIVE:" -b add,maximized_vert
